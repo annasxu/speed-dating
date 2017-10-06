@@ -12,4 +12,7 @@ Dtest = subset(data,wave %in% test)
 #14 waves in training set
 Dtrain = subset(data, !(wave %in% test))
 
-plot(Dtrain$age_diff,Dtrain$)
+plot(Dtrain$age_diff,Dtrain$like)
+boxplot(Dtrain$same,Dtrain$like)
+plot(Dtrain$int_corr,Dtrain$like)
+boxplot(Dtrain$attr>6,Dtrain$like)
