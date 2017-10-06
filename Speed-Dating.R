@@ -1,4 +1,4 @@
-Speed_Dating_Data <- read_csv("~/Desktop/speed-dating-experiment/Speed Dating Data.csv")
+Speed_Dating_Data = read.csv("Speed Dating Data.csv")
 data =data.frame(Speed_Dating_Data$like,Speed_Dating_Data$samerace,Speed_Dating_Data$int_corr)
 
 data = na.omit(data)
