@@ -14,9 +14,6 @@ Train = data.frame(Dtrain$like,Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrai
 Train = na.omit(Train)
 colnames(Train) = c("like","samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff")
 
-model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
-summary(model)
-
 boxplot(Train$samerace,Train$like, xlab = "Same race, no on left")
 
 plot(Train$int_corr,Train$like)
@@ -46,3 +43,24 @@ violin = function(x, y) {
 }
 
 violin(Train$attr, Train$like)
+violin(Train$intel, Train$like)
+violin(Train$fun, Train$like)
+violin(Train$amb, Train$like)
+violin(Train$sinc, Train$like)
+violin(Train$shar, Train$like)
+
+plot(Train$int_corr,Train$shar)
+plot(Train$int_corr,Train$like)
+
+#percieved shared interest does not reflect actual shared interest
+x1 = Train$shar[Train$int_corr<0]
+x2 = Train$shar[Train$int_corr>0]
+vioplot(x1,x2)
+cor(Train$shar,Train$int_corr)
+cor(Train$like,Train$int_corr)
+
+grp1 = mean()
+barplot()
+
+model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
+summary(model)
