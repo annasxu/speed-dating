@@ -76,3 +76,14 @@ summary(model)
 ## Linear Regression: Scored Attributes and Self-Perception
 #####################################################################################
 
+data$iid
+
+
+
+aggregate(data[,])
+  
+  
+
+
+
+
