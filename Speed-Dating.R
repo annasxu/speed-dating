@@ -83,5 +83,14 @@ colnames(Train2) = c("iid", "gender", "age", "race", "field", "attr","sinc","int
 
 
 Train2 = aggregate(Train2[, 1:15], list(Train2$iid), mean)
+Train2$self_perc = Train2[7:11]-Train2[12:16]
+
+
+for (i in 1:nrow(Train2)){
+
+  x = c(Train2[i,]$attr,Train2[i,]$sinc,Train2[i,]$intel,Train2[i,]$fun,Train2[i,]$amb)
+  y = c(Train2[i,]$attr3_1,Train2[i,]$sinc3_1,Train2[i,]$intel3_1,Train2[i,]$fun3_1,Train2[i,]$amb3_1)
+  print(cor(x,y))
+}
 
 
