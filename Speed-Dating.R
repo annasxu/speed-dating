@@ -90,7 +90,12 @@ for (i in 1:nrow(Train2)){
 
   x = c(Train2[i,]$attr,Train2[i,]$sinc,Train2[i,]$intel,Train2[i,]$fun,Train2[i,]$amb)
   y = c(Train2[i,]$attr3_1,Train2[i,]$sinc3_1,Train2[i,]$intel3_1,Train2[i,]$fun3_1,Train2[i,]$amb3_1)
-  print(cor(x,y))
+  Train2$self_perc_score[i] =  (cor(x,y))
 }
 
+
+View(Train2)
+Train2 = na.omit(Train2)
+View(Train2)
+hist(Train2$self_perc_score)
 
