@@ -10,37 +10,58 @@ Dtest = subset(data,wave %in% test)
 #14 waves in training set
 Dtrain = subset(data, !(wave %in% test))
 
-Dtrain_like = data.frame(Dtrain$like,Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar)
-Dtrain_like = na.omit(Dtrain_like)
-Dtrain_like$Dtrain.attr
+Train = data.frame(Dtrain$like,Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar,Dtrain$age_diff)
+Train = na.omit(Train)
+colnames(Train) = c("like","samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff")
 
-model = lm(Dtrain$like~Dtrain$age_diff+Dtrain$samerace+Dtrain$int_corr+Dtrain$attr+Dtrain$sinc+Dtrain$intel+Dtrain$fun+Dtrain$amb+Dtrain$shar,data=Dtrain)
-summary(model)
+#number of NAs for like = 10, like = 9, like = 8
+#[explanation here]
 
-plot(Dtrain$int_corr,Dtrain$like)
-as.factor(Dtrain_like$Dtrain.attr)
-as.factor(Dtrain_like$Dtrain.like)
-plot(Dtrain_like$Dtrain.attr,Dtrain_like$Dtrain.like)
 
-#violinplot
+
+#race visualization
+boxplot(Train$samerace,Train$like, xlab = "Same race, no on left")
+
 library(vioplot)
-x1 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==1]
-x2 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==2]
-x3 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==3]
-x4 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==4]
-x5 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==5]
-x6 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==6]
-x7 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==7]
-x8 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==8]
-x9 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==9]
-x10 = Dtrain_like$Dtrain.like[Dtrain_like$Dtrain.attr==10]
-vioplot(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10,col="gray")
 
+#This funciton takes in predictor x and result y and makes
+#violin plots with each value of x as a group for the plot.
+#x and y must have 10 possible values
+violin = function(x, y) {
+  x1 = y[x==1]
+  x2 = y[x==2]
+  x3 = y[x==3]
+  x4 = y[x==4]
+  x5 = y[x==5]
+  x6 = y[x==6]
+  x7 = y[x==7]
+  x8 = y[x==8]
+  x9 = y[x==9]
+  x10 = y[x==10]
+  vioplot(x1,x2,x3,x4,x5,x6,x7,x8,x9,x10)
+}
+
+violin(Train$attr, Train$like)
+
+#histogram of liking people
+hist(Train$like)
 
 #correlation plot 
-install.packages("corrplot")
+#install.packages("corrplot")
 library(corrplot)
-cor(Dtrain_like[-1])
-corrplot(cor(Dtrain_like[-1]), tl.col = "black",method="number")
+corrplot(cor(Train[-1]), tl.col = "black",method="number")
+
+
+
+#
+model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
+summary(model)
+
+
+model = lm(Train$like~Train$samerace)
+summary(model)
+
+
+
 
 
