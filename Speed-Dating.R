@@ -94,8 +94,24 @@ for (i in 1:nrow(Train2)){
 }
 
 
-View(Train2)
+
 Train2 = na.omit(Train2)
-View(Train2)
+
 hist(Train2$self_perc_score)
+boxplot(Train2$gender,Train2$self_perc_score)
+
+boxplot(Train2$gender,Train2$attr-Train2$attr3_1,data = Train2)
+
+Train2$attr_diff = Train2$attr-Train2$attr3_1
+gender0 <- subset(Train2, Train2$gender == 0)
+gender1 <- subset(Train2, Train2$gender == 1)
+var(gender0$attr_diff)
+var(gender1$attr_diff)
+hist(gender0$attr_diff)
+hist(gender1$attr_diff)
+
+
+
+
+
 
