@@ -14,9 +14,9 @@ Dtest = subset(data,wave %in% test)
 
 #Create training set: 14 waves in training set
 Dtrain = subset(data, !(wave %in% test))
-Train = data.frame(Dtrain$like,Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar,Dtrain$age_diff)
+Train = data.frame(Dtrain$iid, Dtrain$like,Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar,Dtrain$age_diff)
 Train = na.omit(Train)
-colnames(Train) = c("like","samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff")
+colnames(Train) = c("iid", "like","samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff")
 
 #Visualizing distribution of liking people
 hist(Train$like)
@@ -65,7 +65,7 @@ cor(Train$like,Train$int_corr)
 #Correlation plot of all Attributes
 #install.packages("corrplot")
 library(corrplot)
-corrplot(cor(Train[-1]), tl.col = "black",method="number")
+corrplot(cor(Train[-2]), tl.col = "black",method="number")
 
 #Fitting a Model
 model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
