@@ -63,9 +63,9 @@ cor(Train$shar,Train$int_corr)
 cor(Train$like,Train$int_corr)
 
 #Correlation plot of all Attributes
-#install.packages("corrplot")
+install.packages("corrplot")
 library(corrplot)
-corrplot(cor(Train[-2]), tl.col = "black",method="number")
+corrplot(cor(Train[-1]), tl.col = "black",method="number")
 
 #Fitting a Model
 model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
@@ -75,15 +75,10 @@ summary(model)
 #####################################################################################
 ## Linear Regression: Scored Attributes and Self-Perception
 #####################################################################################
-
-data$iid
-
-
-
-aggregate(data[,])
-  
-  
-
-
+#Train2 = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$attr5_1, Dtrain$sinc5_1, Dtrain$intel5_1, Dtrain$fun5_1, Dtrain$amb5_1)
+#colnames(Train2) = c("iid", "gender", "age", "race", "field", "attr","sinc","intel","fun","amb", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "attr5_1", "sinc5_1", "intel5_1", "fun5_1", "amb5_1")
+Train2 = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1)
+Train2 = na.omit(Train2)
+colnames(Train2) = c("iid", "gender", "age", "race", "field", "attr","sinc","intel","fun","amb", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1")
 
 
