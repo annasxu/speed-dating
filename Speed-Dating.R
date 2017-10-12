@@ -82,3 +82,6 @@ Train2 = na.omit(Train2)
 colnames(Train2) = c("iid", "gender", "age", "race", "field", "attr","sinc","intel","fun","amb", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1")
 
 
+Train2 = aggregate(Train2[, 1:15], list(Train2$iid), mean)
+
+
