@@ -19,10 +19,14 @@ Train = na.omit(Train)
 colnames(Train) = c("iid", "like","samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff")
 
 #Visualizing distribution of liking people
-hist(Train$like)
+p <- ggplot(Train, aes(x=Train$like))
+p + geom_histogram() + labs(x = "Like Score", y = "Frequency", title = "Distribution of Like Scores")
+
 
 #Visualizing samerace's impact on like
-boxplot(Train$samerace,Train$like, xlab = "Same race, no on left")
+p <- ggplot(Train, aes(as.factor(Train$samerace), as.numeric(Train$like)))
+p + geom_boxplot() + labs(x = "Race", y = "Frequency", title = "Distribution of Like Scores") + scale_x_discrete(breaks=c("Not Same Race","Same Race"),labels=c("Dose 0.5", "Dose 1"))
+
 
 
 #Creating violin plots
@@ -45,6 +49,7 @@ violin = function(x, y) {
 }
 
 #Visualizing predictors with Violin plots
+par(mfrow=c(2,3))
 violin(Train$attr, Train$like)
 violin(Train$intel, Train$like)
 violin(Train$fun, Train$like)
@@ -65,15 +70,19 @@ cor(Train$like,Train$int_corr)
 #Correlation plot of all Attributes
 install.packages("corrplot")
 library(corrplot)
+par(mfrow=c(1,1))
 corrplot(cor(Train[-1]), tl.col = "black",method="number")
 
 #Fitting a Model
+library(MuMIn)
 model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
-summary(model)
+options(na.action = "na.fail")
+dredge(model)[1]
+
 
 
 #####################################################################################
-## Linear Regression: Scored Attributes and Self-Perception
+## Linear Regression: Demographic Information and Self-Perception
 #####################################################################################
 Train2 = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1)
 Train2 = na.omit(Train2)
@@ -94,24 +103,29 @@ for (i in 1:nrow(Train2)){
 #ommitting all nas
 Train2 = na.omit(Train2)
 
-#visualizing self_perc_score and gender
+#visualizing self_awar_score
 hist(Train2$self_awar_score)
 
-
-#visualizing self_perc_score with all 
-boxplot(Train2$gender,Train2$self_awar_score)
-Train2$race = factor(Train2$race)
-boxplot(Train2$self_awar_score,Train2$race,data = Train2)
+#visualizing self_awar_score with gender, age, race, field
+par(mfrow=c(1,1))
+boxplot(Train2$self_awar_score~Train2$gender) 
+boxplot(Train2$self_awar_score~Train2$race) 
+boxplot(Train2$self_awar_score~Train2$field) 
+plot(Train2$age,Train2$self_awar_score)
 
 #not using self_awar_score, using attr diff.
-boxplot(Train2$gender,Train2$attr-Train2$attr3_1,data = Train2)
 Train2$attr_diff = Train2$attr-Train2$attr3_1
-gender0 <- subset(Train2, Train2$gender == 0)
-gender1 <- subset(Train2, Train2$gender == 1)
-var(gender0$attr_diff)
-var(gender1$attr_diff)
-hist(gender0$attr_diff)
-hist(gender1$attr_diff)
+par(mfrow=c(1,2))
+boxplot(Train2$attr_diff~Train2$gender,data = Train2)
+boxplot(Train2$gender,Train2$attr_diff,data = Train2)
+
+#fit linear model
+model = lm(Train2$self_awar_score~Train2$gender + Train2$age + Train2$race + Train2$field)
+options(na.action = "na.fail")
+dredge(model)[1]
+model = lm(Train2$self_awar_score~Train2$race)
+summary(model)
+
 
 
 
@@ -133,9 +147,5 @@ for (i in 1:nrow(Train3)){
 View(Train3)
 hist(Train3$self_awar_score)
 hist(Train3$exp_self_awar_score)
-
-
-
-
 
 
