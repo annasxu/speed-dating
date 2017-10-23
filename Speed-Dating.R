@@ -2,21 +2,25 @@
 ## Linear Regression: Scored Attributes and Liking
 #####################################################################################
 
+library(ggplot2)
+library(vioplot)
 #Create age_diff
 data = Speed_Dating_Data
 age_diff = data$age - data$age_o
 data = data.frame(data, age_diff)
+Dtrain = data
 
 #Create test set: setting aside 7 waves for test set
-set.seed(6)
-test = sample(21,7)
-Dtest = subset(data,wave %in% test)
+#set.seed(6)
+#test = sample(21,7)
+#Dtest = subset(data,wave %in% test)
 
 #Create training set: 14 waves in training set
-Dtrain = subset(data, !(wave %in% test))
+#Dtrain = subset(data, !(wave %in% test))
 Train = data.frame(Dtrain$iid, Dtrain$like,Dtrain$race, Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar,Dtrain$age_diff,Dtrain$like_o)
 Train = na.omit(Train)
 colnames(Train) = c("iid", "like","race", "samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff", "like_o")
+
 
 #Visualizing distribution of liking people
 p <- ggplot(Train, aes(x=Train$like))
@@ -27,15 +31,6 @@ p + geom_histogram() + labs(x = "Like Score", y = "Frequency", title = "Distribu
 par(mfrow=c(1,1))
 p <- ggplot(Train, aes(as.factor(Train$samerace), as.numeric(Train$like)))
 p + geom_boxplot()
-
-boxplot(Train$samerace,Train$like)
-
-Train.no.same.race <- subset(Train, Train$samerace == 0)  
-Train.yes.same.race <- subset(Train, Train$samerace == 1)  
-mean(Train.no.same.race$like)
-hist(Trian.no.same.race$like)
-mean(Train.yes.same.race$like)
-
 
 #like score vs. same race violin plot
 plot(0:1,0:1,type="n",axes=FALSE,ann=FALSE)
@@ -92,18 +87,10 @@ violin(Train$amb, Train$like, "Ambition Score","Like Score","Like Score Vs. Ambi
 violin(Train$sinc, Train$like,"Sincerity Score","Like Score","Like Score Vs. Sincerity Score")
 violin(Train$shar, Train$like,"Shared Interest Score","Like Score","Shared Interest Vs. Attractiveness Score")
 
-#Visualizing Interest Correlation with Shared Interest and Liking
-plot(Train$int_corr,Train$shar)
-plot(Train$int_corr,Train$like)
 
 #Percieved shared interest does not reflect actual shared interest
 x1 = Train$shar[Train$int_corr<0]
 x2 = Train$shar[Train$int_corr>0]
-<<<<<<< HEAD
-vioplot(x1,x2,col="gray")
-=======
-vioplot(x1,x2) #not working
->>>>>>> 9bbaf3f53da0f046c584127a7a277320b8ad2be4
 cor(Train$shar,Train$int_corr)
 cor(Train$like,Train$int_corr)
 
@@ -114,20 +101,13 @@ par(mfrow=c(1,1))
 corrplot(cor(Train[-1]), tl.col = "black",method="number",main = "Correlation Plot")
 
 #Fitting a Model
-<<<<<<< HEAD
 library(MuMIn)
 model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
 options(na.action = "na.fail")
 dredge(model)[1]
 model = lm(Train$like~Train$age_diff + Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
-summary
-
-model = lm(Train$like~ Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
-=======
-model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb+Train$shar+Train$like_o, data=Train)
 summary(model)
-model = lm(Train$like~Train$like_o, data=Train)
->>>>>>> 9bbaf3f53da0f046c584127a7a277320b8ad2be4
+model = lm(Train$like~Train$samerace)
 summary(model)
 
 #####################################################################################
@@ -145,7 +125,6 @@ for (i in 1:nrow(Train2)){
 
   x = c(Train2[i,]$attr_o,Train2[i,]$sinc_o,Train2[i,]$intel_o,Train2[i,]$fun_o,Train2[i,]$amb_o)
   y = c(Train2[i,]$attr3_1,Train2[i,]$sinc3_1,Train2[i,]$intel3_1,Train2[i,]$fun3_1,Train2[i,]$amb3_1)
-  #Train2$self_awar_score[i] =  (cor(x,y))
   Train2$self_awar_score[i] = mean(x-y)
 }
 
@@ -164,13 +143,11 @@ Train2 = na.omit(Train2)
 p <- ggplot(Train2, aes(x=Train2$self_awar_score))
 p + geom_histogram() + labs(x = "Self Awareness Score", y = "Frequency", title = "Distribution of Self Awareness Scores")
 
-
-<<<<<<< HEAD
 #visualizing self_awar_score with gender, age, race, field
 par(mfrow=c(2,2))
 
 p1 <- ggplot(Train2, aes(as.factor(Train2$gender),Train2$self_awar_score))
-p1 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Gender", title =  "Self Awareness Score by Gender")  + scale_x_discrete(labels=c("Female", "Male"))
+p1 + geom_boxplot() + geom_jitter() +  labs(y = "Self Awareness Score", x = "Gender", title =  "Self Awareness Score by Gender")  + scale_x_discrete(labels=c("Female", "Male"))
 
 p2 <- ggplot(Train2, aes(as.factor(Train2$race),Train2$self_awar_score))
 p2 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Race", title =  "Self Awareness Score by Race")  + scale_x_discrete(labels=c("Black/African American", "European/Caucasian-American", "Latino/Hispanic American", "Asian/Pacific Islander/Asian-American", "Native American","Other"))  + theme(axis.text.x = element_text(angle=10))
@@ -183,33 +160,20 @@ p4 <- ggplot(Train2, aes(as.factor(Train2$age),Train2$self_awar_score))
 p4 + geom_point() + labs(y = "Self Awareness Score", x = "Age", title =  "Self Awareness Score by Age")  
 
 
-#not using self_awar_score, using attr diff.
-=======
-#visualizing self_awar_score with all 
-boxplot(Train2$gender,Train2$self_awar_score)
-Train2$race = factor(Train2$race)
-boxplot(Train2$self_awar_score~Train2$race,data = Train2)
-boxplot(Train2$self_awar_score~Train2$field)
-boxplot(Train2$self_awar_score~Train2$gender)
-plot(Train2$age,Train2$self_awar_score)
-
-#not using self_awar_score, using attr diff.
-boxplot(Train2$gender,Train2$attr_0-Train2$attr3_1,data = Train2)
->>>>>>> 9bbaf3f53da0f046c584127a7a277320b8ad2be4
-Train2$attr_diff = Train2$attr-Train2$attr3_1
-par(mfrow=c(1,2))
-boxplot(Train2$attr_diff~Train2$gender,data = Train2)
-boxplot(Train2$gender,Train2$attr_diff,data = Train2)
 
 #fit linear model
 model = lm(Train2$self_awar_score~as.factor(Train2$gender) + Train2$age + as.factor(Train2$race) + as.factor(Train2$field))
 options(na.action = "na.fail")
 dredge(model)[1]
-model = lm(Train2$self_awar_score~as.factor(Train2$race))
+model = lm(Train2$self_awar_score~as.factor(Train2$gender) + as.factor(Train2$race))
+model = lm(Train2$self_awar_score~ as.factor(Train2$race))
+model = lm(Train2$self_awar_score~ as.factor(Train2$gender))
+model = lm(Train2$self_awar_score~ as.factor(Train2$race))
 summary(model)
 
 
 #does one's self-awarness predict how much other people like you?
+par(mfrow=c(1,1))
 plot(Train2$self_awar_score,Train2$like_o) #I think this is quadratic!!!!! (downward, centered on 0)
 hist(Train2$like_o)
 
@@ -232,15 +196,6 @@ hist(Train3$exp_self_awar_score)
 t.test(Train3$self_awar_score,Train3$exp_self_awar_score,paired=TRUE)
 #no difference between self-awareness score and how they expect others to perceive them
 
-#######Making new dataset to find most and least liked people
-Train4 = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$like_o)
-Train2 = na.omit(Train2)
-colnames(Train2) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "like_o")
 
-<<<<<<< HEAD
-=======
-#now each row is a person, not an interaction
-Train2 = aggregate(Train2[, 1:length(Train2)], list(Train2$iid), mean)
 
->>>>>>> 9bbaf3f53da0f046c584127a7a277320b8ad2be4
 
