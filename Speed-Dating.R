@@ -25,6 +25,8 @@ colnames(Train) = c("iid", "like","race", "samerace","int_corr","attr","sinc","i
 #Visualizing distribution of liking people
 p <- ggplot(Train, aes(x=Train$like))
 p + geom_histogram() + labs(x = "Like Score", y = "Frequency", title = "Distribution of Like Scores")
+mean(Train$like)
+sd(Train$like)
 
 
 #Visualizing samerace's impact on like
@@ -98,7 +100,9 @@ cor(Train$like,Train$int_corr)
 install.packages("corrplot")
 library(corrplot)
 par(mfrow=c(1,1))
+
 corrplot(cor(Train[-1]), tl.col = "black",method="number",main = "Correlation Plot")
+corrplot(cor(Train[-1]), tl.col = "black",method="square",main = "Correlation Plot")
 
 #Fitting a Model
 library(MuMIn)
@@ -106,6 +110,12 @@ model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Tr
 options(na.action = "na.fail")
 dredge(model)[1]
 model = lm(Train$like~Train$age_diff + Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
+summary(model)
+
+model = lm(Train$like~Train$samerace)
+summary(model)
+
+model = lm(Train$like~ Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
 summary(model)
 model = lm(Train$like~Train$samerace)
 summary(model)
@@ -129,9 +139,9 @@ for (i in 1:nrow(Train2)){
 }
 
 #who gets an average like of 7.5&up
-Popular = subset(Train2,Train2$like_o>7.5)
+Popular = subset(Train2,Train2$like_o>7.65)
 #who gets an average of 2.5
-Unpopular = subset(Train2,Train2$like_o<4.5)
+Unpopular = subset(Train2,Train2$like_o<4.57)
 
 table(Popular$race, Popular$gender)
 table(Unpopular$race, Unpopular$gender)
@@ -142,18 +152,22 @@ Train2 = na.omit(Train2)
 #visualizing self_awar_score
 p <- ggplot(Train2, aes(x=Train2$self_awar_score))
 p + geom_histogram() + labs(x = "Self Awareness Score", y = "Frequency", title = "Distribution of Self Awareness Scores")
+mean(Train2$self_awar_score)
+sd(Train2$self_awar_score)
 
 #visualizing self_awar_score with gender, age, race, field
 par(mfrow=c(2,2))
 
 p1 <- ggplot(Train2, aes(as.factor(Train2$gender),Train2$self_awar_score))
-p1 + geom_boxplot() + geom_jitter() +  labs(y = "Self Awareness Score", x = "Gender", title =  "Self Awareness Score by Gender")  + scale_x_discrete(labels=c("Female", "Male"))
+p1 + geom_boxplot() +  labs(y = "Self Awareness Score", x = "Gender", title =  "Self Awareness Score by Gender")  + scale_x_discrete(labels=c("Female", "Male"))
 
 p2 <- ggplot(Train2, aes(as.factor(Train2$race),Train2$self_awar_score))
-p2 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Race", title =  "Self Awareness Score by Race")  + scale_x_discrete(labels=c("Black/African American", "European/Caucasian-American", "Latino/Hispanic American", "Asian/Pacific Islander/Asian-American", "Native American","Other"))  + theme(axis.text.x = element_text(angle=10))
+p2 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Race", title =  "Self Awareness Score by Race")  + scale_x_discrete(labels=c("Black/African American", "European/Caucasian-American", "Latino/Hispanic American", "Asian/Pacific Islander/Asian-American","Other"))  + theme(axis.text.x = element_text(angle=10))
 
 p3 <- ggplot(Train2, aes(as.factor(Train2$field),Train2$self_awar_score))
-p3 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Field", title =  "Self Awareness Score by Field") 
+p3 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Field", title =  "Self Awareness Score by Field") + scale_x_discrete(labels=c("Law", "Math", "Social Science", "Medical Science", "Engineering","English","History","Business","Education","Biological Sciences","Social Work","Undergrad","Political Science","Film","Fine Arts","Languages","Architecture","Other"))  + theme(axis.text.x = element_text(angle=30))
+
+
 
 
 p4 <- ggplot(Train2, aes(as.factor(Train2$age),Train2$self_awar_score))
