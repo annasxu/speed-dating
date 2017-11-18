@@ -32,3 +32,69 @@ Dtrain = subset(data, !(wave %in% test))
 DTrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$same_race, Dtrain$order, Dtrain$age_diff, Dtrain$int_corr, Dtrain$match)
 colnames(Dtrain) = c("iid", "gender", "age", "race", "same_race", "order","age_diff","int_corr", "match")
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+###################################################################
+##Logistic Regression 
+
+#creating the data frame
+logisticdata = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age_o, Dtrain$race_o, Dtrain$samerace,Dtrain$dec)
+logisticdata = na.omit(logisticdata)
+colnames(logisticdata) = c("iid", "gender", "age_o", "race_o", "same_race","dec")
+
+logisticdatatesting = data.frame(Dtest$iid, Dtest$gender, Dtest$age_o, Dtest$race_o, Dtest$samerace,Dtest$dec)
+logisticdatatesting = na.omit(logisticdatatesting)
+colnames(logisticdatatesting) = c("iid", "gender", "age_o", "race_o", "same_race","dec")
+
+#fitting the full model
+fullmodel = glm(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race) ,family="binomial",data = logisticdata)
+summary(fullmodel)
+
+#visualizing that women are more choosy
+females = subset(logisticdata,logisticdata$gender ==0)
+female_dec = females$dec
+hist(female_dec)
+males = subset(logisticdata,logisticdata$gender ==1)
+male_dec = males$dec
+hist(males$dec)
+
+#cross validation
+library(leaps)
+regfit.full = regsubsets(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata,nvmax=4)
+summary(regfit.full)
+
+
+install.packages("caret")
+library(caret)
+ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
+
+
+full_model <- train(as.factor(dec) ~  age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata, family="binomial", trControl = ctrl)
+View(full_model$pred)
+
+
+pred = predict(mod_fit, newdata=logisticdatatesting)
+pred
+
+
+
+
+
+
+
