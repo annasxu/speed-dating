@@ -111,26 +111,26 @@ male_dec = males$dec
 hist(males$dec)
 
 #cross validation
-library(leaps)
-regfit.full = regsubsets(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata,nvmax=4)
-summary(regfit.full)
+fpr <- NULL
+fnr <- NULL
+acc <- NULL
 
-
-install.packages("caret")
-library(caret)
-ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
-
-
-full_model <- train(as.factor(dec) ~  age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata, family="binomial", trControl = ctrl)
-View(full_model$pred)
-
-
-pred = predict(mod_fit, newdata=logisticdatatesting)
-pred
-
-
-
-
+set.seed(1)
+for (i in 1:500){
+  smp_size = floor(0.67 * nrow(logisticdata))
+  index <- sample(seq_len(nrow(logisticdata)),size=smp_size)
+  train <- logisticdata[index, ]
+  test <- logisticdata[-index, ]
+  model = glm(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),family=binomial,data=train)
+  results_prob <- predict(model,test,type='response')
+  results <- ifelse(results_prob > 0.5,1,0)
+  answers <- test$dec
+  misClasificError <- mean(answers != results)
+  acc[i] <- 1-misClasificError
+  cm <- confusionMatrix(data=results, reference=answers)
+  fpr[i] <- cm$table[2]/(nrow(logisticdata)-smp_size)
+  fnr[i] <- cm$table[3]/(nrow(logisticdata)-smp_size)
+}
 
 
 
