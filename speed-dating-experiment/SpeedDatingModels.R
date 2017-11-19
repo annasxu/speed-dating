@@ -24,16 +24,39 @@ colnames(logisticdatatesting) = c("iid", "gender", "age_o", "race_o", "same_race
 
 ################
 #Aside: decision tree
+logisticdata = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age_o, Dtrain$race_o, Dtrain$samerace,Dtrain$dec, Dtrain$attr, Dtrain$intel)
+logisticdata = na.omit(logisticdata)
+colnames(logisticdata) = c("iid", "gender", "age_o", "race_o", "same_race","dec", "attr", "intel")
+
 library(rpart)
 fit <- rpart(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),
              method="class", data=logisticdata)
 printcp(fit) # display the results 
 plotcp(fit) # visualize cross-validation results 
+print(fit)
 summary(fit) # detailed summary of splits
 
+# plot tree
 
+plot(fit, uniform=TRUE, 
+     main="Classification Tree for Decision")
+text(fit, use.n=TRUE, all=TRUE, cex=.8)
 
+# prune the tree 
+pfit<- prune(fit, cp=   fit$cptable[which.min(fit$cptable[,"xerror"]),"CP"])
+print(pfit)
 
+# plot the pruned tree 
+plot(pfit, uniform=TRUE, 
+     main="Pruned Classification Tree for Decision")
+#text(pfit, use.n=TRUE, all=TRUE, cex=.8)
+text(pfit, use.n=TRUE, all=TRUE, cex=.8)
+#post(pfit, file = "c:/ptree.ps", 
+ #    title = "Pruned Classification Tree for Decision")
+
+# create attractive postscript plot of tree 
+#post(fit, file = "c:/tree.ps", 
+#     title = "Classification Tree for Decision")
 
 #############
 
@@ -41,10 +64,11 @@ summary(fit) # detailed summary of splits
 
 
 ##################################
-Dtrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$like_o)
+#Dtrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$like_o, Dtrain$goal, Dtrain$date, Dtrain$go_out, Dtrain$exphappy, Dtrain$expnum)
+#Dtrain = na.omit(Dtrain)
+colnames(Dtrain) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "goal", "date", "go_out", "exphappy", "expnum", "like_o")
+Dtrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$goal, Dtrain$date, Dtrain$go_out, Dtrain$exphappy, Dtrain$like_o)
 Dtrain = na.omit(Dtrain)
-colnames(Dtrain) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "like_o")
-
 
 Dtrain = aggregate(Dtrain[, 1:length(Dtrain)], list(Dtrain$iid), mean)
 #now like_o is basically popularity
@@ -59,11 +83,11 @@ for (i in 1:nrow(Dtrain)){
   Dtrain$self_awar_score[i] = mean(x-y)
 }
 
-##Predicting popularity with following features: age, gender, race, self-awareness, field
+##Predicting popularity with following features: age, gender, race, interaction, field
 #need to drop field == 12 from training set because no one in test set is in that field
 Dtrain = subset(Dtrain, Dtrain$field != 12)
 
-model = lm(Dtrain$like_o~Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field))
+model = lm(Dtrain$like_o~Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field) + as.factor(Dtrain$goal) + as.factor(Dtrain$date) + as.factor(Dtrain$go_out) + as.numeric(Dtrain$exphappy) + Dtrain$expnum)
 summary(model)
 
 library(glmnet)
