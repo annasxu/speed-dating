@@ -10,8 +10,6 @@ Dtest = subset(data,wave %in% test)
 Dtrain = subset(data, !(wave %in% test))
 
 
-
-
 ###################################################################
 ##Logistic Regression 
 
@@ -38,41 +36,6 @@ summary(fit) # detailed summary of splits
 
 
 #############
-
-
-#fitting the full model
-fullmodel = glm(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race) ,family="binomial",data = logisticdata)
-summary(fullmodel)
-
-#visualizing that women are more choosy
-females = subset(logisticdata,logisticdata$gender ==0)
-female_dec = females$dec
-hist(female_dec)
-males = subset(logisticdata,logisticdata$gender ==1)
-male_dec = males$dec
-hist(males$dec)
-
-#cross validation
-library(leaps)
-regfit.full = regsubsets(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata,nvmax=4)
-summary(regfit.full)
-
-
-install.packages("caret")
-library(caret)
-ctrl <- trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
-
-
-full_model <- train(as.factor(dec) ~  age_o + gender+ as.factor(race_o) + as.factor(same_race),data = logisticdata, family="binomial", trControl = ctrl)
-View(full_model$pred)
-
-
-pred = predict(mod_fit, newdata=logisticdatatesting)
-pred
-
-
-
-
 
 
 
@@ -142,4 +105,49 @@ colnames(Dtrain) = c("iid", "gender", "age", "race", "same_race", "order","age_d
 
 
 
+###################################################################
+##Logistic Regression 
+
+#creating the data frame
+logisticdata = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age_o, Dtrain$race_o, Dtrain$samerace,Dtrain$dec)
+logisticdata = na.omit(logisticdata)
+colnames(logisticdata) = c("iid", "gender", "age_o", "race_o", "same_race","dec")
+
+logisticdatatesting = data.frame(Dtest$iid, Dtest$gender, Dtest$age_o, Dtest$race_o, Dtest$samerace,Dtest$dec)
+logisticdatatesting = na.omit(logisticdatatesting)
+colnames(logisticdatatesting) = c("iid", "gender", "age_o", "race_o", "same_race","dec")
+
+#fitting the full model
+fullmodel = glm(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race) ,family="binomial",data = logisticdata)
+summary(fullmodel)
+
+#visualizing that women are more choosy
+females = subset(logisticdata,logisticdata$gender ==0)
+female_dec = females$dec
+hist(female_dec)
+males = subset(logisticdata,logisticdata$gender ==1)
+male_dec = males$dec
+hist(males$dec)
+
+#cross validation
+fpr <- NULL
+fnr <- NULL
+acc <- NULL
+
+set.seed(1)
+for (i in 1:500){
+  smp_size = floor(0.67 * nrow(logisticdata))
+  index <- sample(seq_len(nrow(logisticdata)),size=smp_size)
+  train <- logisticdata[index, ]
+  test <- logisticdata[-index, ]
+  model = glm(as.factor(dec)~age_o + gender+ as.factor(race_o) + as.factor(same_race),family=binomial,data=train)
+  results_prob <- predict(model,test,type='response')
+  results <- ifelse(results_prob > 0.5,1,0)
+  answers <- test$dec
+  misClasificError <- mean(answers != results)
+  acc[i] <- 1-misClasificError
+  cm <- confusionMatrix(data=results, reference=answers)
+  fpr[i] <- cm$table[2]/(nrow(logisticdata)-smp_size)
+  fnr[i] <- cm$table[3]/(nrow(logisticdata)-smp_size)
+}
 
