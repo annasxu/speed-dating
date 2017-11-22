@@ -58,6 +58,17 @@ text(pfit, use.n=TRUE, all=TRUE, cex=.8)
 #post(fit, file = "c:/tree.ps", 
 #     title = "Classification Tree for Decision")
 
+test = data.frame(Dtest$iid, Dtest$gender, Dtest$age_o, Dtest$race_o, Dtest$samerace,Dtest$dec, Dtest$attr, Dtest$intel)
+test = na.omit(test)
+colnames(test) = c("iid", "gender", "age_o", "race_o", "same_race","dec", "attr", "intel")
+
+pred <- predict(pfit, test)
+
+pred = pred < 0.5
+pred = pred[,1]
+
+mean(pred == test$dec)
+
 #############
 
 
@@ -66,16 +77,19 @@ text(pfit, use.n=TRUE, all=TRUE, cex=.8)
 ##################################
 #Dtrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$like_o, Dtrain$goal, Dtrain$date, Dtrain$go_out, Dtrain$exphappy, Dtrain$expnum)
 #Dtrain = na.omit(Dtrain)
-colnames(Dtrain) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "goal", "date", "go_out", "exphappy", "expnum", "like_o")
+Dtrain = subset(data, !(wave %in% test))
 Dtrain = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$goal, Dtrain$date, Dtrain$go_out, Dtrain$exphappy, Dtrain$like_o)
+colnames(Dtrain) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "goal", "date", "go_out", "exphappy", "like_o")
 Dtrain = na.omit(Dtrain)
 
 Dtrain = aggregate(Dtrain[, 1:length(Dtrain)], list(Dtrain$iid), mean)
 #now like_o is basically popularity
 
-Dtest = data.frame(Dtest$iid, Dtest$gender, Dtest$age, Dtest$race, Dtest$field_cd, Dtest$attr_o,Dtest$sinc_o,Dtest$intel_o,Dtest$fun_o,Dtest$amb_o, Dtest$attr3_1, Dtest$sinc3_1, Dtest$intel3_1, Dtest$fun3_1, Dtest$amb3_1, Dtest$like_o)
+Dtest = subset(data,wave %in% test)
+
+Dtest = data.frame(Dtest$iid, Dtest$gender, Dtest$age, Dtest$race, Dtest$field_cd, Dtest$attr_o,Dtest$sinc_o,Dtest$intel_o,Dtest$fun_o,Dtest$amb_o, Dtest$attr3_1, Dtest$sinc3_1, Dtest$intel3_1, Dtest$fun3_1, Dtest$amb3_1, Dtest$goal, Dtest$date, Dtest$go_out, Dtest$exphappy,Dtest$like_o)
+colnames(Dtest) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "goal", "date", "go_out", "exphappy", "like_o")
 Dtest = na.omit(Dtest)
-colnames(Dtest) = c("iid", "gender", "age", "race", "field", "attr_o","sinc_o","intel_o","fun_o","amb_o", "attr3_1", "sinc3_1", "intel3_1", "fun3_1", "amb3_1", "like_o")
 
 for (i in 1:nrow(Dtrain)){
   x = c(Dtrain[i,]$attr_o,Dtrain[i,]$sinc_o,Dtrain[i,]$intel_o,Dtrain[i,]$fun_o,Dtrain[i,]$amb_o)
@@ -86,16 +100,16 @@ for (i in 1:nrow(Dtrain)){
 ##Predicting popularity with following features: age, gender, race, interaction, field
 #need to drop field == 12 from training set because no one in test set is in that field
 Dtrain = subset(Dtrain, Dtrain$field != 12)
+#Dtrain = data.frame(Dtrain$like_o, Dtrain$age, Dtrain$gender, Dtrain$race, Dtrain$field, Dtrain$goal, Dtrain$date, Dtrain$go_out, Dtrain$exphappy)
+#Dtrain = na.omit(Dtrain)
 
-model = lm(Dtrain$like_o~Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field) + as.factor(Dtrain$goal) + as.factor(Dtrain$date) + as.factor(Dtrain$go_out) + as.numeric(Dtrain$exphappy) + Dtrain$expnum)
+model = lm(Dtrain$like_o~Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field) + as.factor(Dtrain$goal) + Dtrain$date + Dtrain$go_out + as.numeric(Dtrain$exphappy))
 summary(model)
+coef(model)
 
 library(glmnet)
 
-model = lm(Dtrain$like_o~Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field))
-coef(model)
-
-X_train <- model.matrix(Dtrain$like_o ~ Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field))[,-1]
+X_train <- model.matrix(Dtrain$like_o ~ Dtrain$age + Dtrain$gender + Dtrain$age*Dtrain$gender + as.factor(Dtrain$race) + Dtrain$gender*as.factor(Dtrain$race) + as.factor(Dtrain$field) + as.factor(Dtrain$goal) + Dtrain$date + Dtrain$go_out + as.numeric(Dtrain$exphappy))[,-1]
 y_train <- Dtrain$like_o
 m = lm(y~x)
 coef(model)
@@ -110,7 +124,7 @@ lasso.coef=coef(lasso.mod)[,1]
 #Calculating the test MSE
 Dtest = aggregate(Dtest[, 1:length(Dtest)], list(Dtest$iid), mean)
 
-X_te <- model.matrix(Dtest$like_o ~ Dtest$age + Dtest$gender + Dtest$age*Dtest$gender + as.factor(Dtest$race) + Dtest$gender*as.factor(Dtest$race) + as.factor(Dtest$field))[,-1]
+X_te <- model.matrix(Dtest$like_o ~ Dtest$age + Dtest$gender + Dtest$age*Dtest$gender + as.factor(Dtest$race) + Dtest$gender*as.factor(Dtest$race) + as.factor(Dtest$field) + as.factor(Dtest$goal) + Dtest$date + Dtest$go_out + as.numeric(Dtest$exphappy))[,-1]
 y_te = Dtest$like_o
 pred.lasso = predict(lasso.mod, s = bestlam, newx = X_te)
 mean((pred.lasso - y_te)**2)
