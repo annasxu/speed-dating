@@ -115,11 +115,18 @@ m = lm(y~x)
 coef(model)
 
 # The Lasso
-lambdas = 10^seq(10,-2,length = 100)
-cv.out=cv.glmnet(X_train,y_train,alpha=1, lambda = lambdas)
+lambdas = 10^seq(-2,1,length = 100)
+cv.out=cv.glmnet(X_train,y_train,alpha=1,lambda=lambdas)
 bestlam=cv.out$lambda.min
 lasso.mod=glmnet(X_train,y_train,alpha=1,lambda=bestlam)
 lasso.coef=coef(lasso.mod)[,1]
+
+
+plot(cv.out,lambdas)
+
+
+
+
 
 #Calculating the test MSE
 Dtest = aggregate(Dtest[, 1:length(Dtest)], list(Dtest$iid), mean)
@@ -146,17 +153,6 @@ colnames(Dtrain) = c("iid", "gender", "age", "race", "same_race", "order","age_d
 ###################################################################
 ##Logistic Regression 
 
-##variables of interest:
-## gender and race: your gender * your partner's race
-## race: your race, your partner's race, your race * your partner's race, same race
-## age: your age, your partner's age, your age * your partner's age
-## interest correlation: int_corr
-## your intentions: goal, date, go_out
-## your expectations: exphappy
-
-
-
-
 #creating the data frame
 logisticdata = data.frame(Dtrain$dec, Dtrain$wave, Dtrain$gender, Dtrain$race, Dtrain$race_o, Dtrain$samerace, Dtrain$age, Dtrain$age_o,Dtrain$int_corr,Dtrain$goal,Dtrain$date,Dtrain$go_out, Dtrain$exphappy)
 logisticdata = na.omit(logisticdata)
@@ -166,11 +162,23 @@ logisticdata_test = data.frame(Dtest$dec, Dtest$wave, Dtest$gender, Dtest$race, 
 logisticdata_test = na.omit(logisticdata_test)
 colnames(logisticdata_test) = c("dec","wave", "gender", "race", "race_o", "same_race","age","age_o","int_corr","goal","date","go_out","exphappy")
 
-#visualizing stuff
+#visualization
 library(plyr)
 count(Speed_Dating_Data$dec)
+counts = table(Speed_Dating_Data$dec,Speed_Dating_Data$race_o)
+rownames(counts) = c("Decision = No","Decision = Yes")
+barplot(counts, main="Partner's Race", xaxt = "n", col=c("darkblue","red"),
+        legend = rownames(counts))
+prob = subset(Speed_Dating_Data, Speed_Dating_Data$race==4)
+mean(prob$dec,na.rm=TRUE)
+prob = subset(Speed_Dating_Data, Speed_Dating_Data$race==2)
+mean(prob$dec,na.rm=TRUE)
+prob = subset(Speed_Dating_Data, Speed_Dating_Data$race_o==4)
+mean(prob$dec,na.rm=TRUE)
+prob = subset(Speed_Dating_Data, Speed_Dating_Data$race_o==2)
+mean(prob$dec,na.rm=TRUE)
 
-#visualizing that women are more choosy
+#visualizing gender
 females = subset(logisticdata,logisticdata$gender ==0)
 female_dec = females$dec
 hist(female_dec)
@@ -178,85 +186,22 @@ males = subset(logisticdata,logisticdata$gender ==1)
 male_dec = males$dec
 hist(males$dec)
 
-#full model
-fullmodel = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o + age*age_o + int_corr + as.factor(goal) + date + go_out + exphappy,family="binomial",data = logisticdata)
-summary(fullmodel)
+dec_0 = subset(Dtrain, Dtrain$dec ==0)
+hist(dec_0$like)
+dec_0_female = subset(dec_0, dec_0$gender == 0)
+hist(dec_0_female$like)
+dec_0_male = subset(dec_0, dec_0$gender ==1)
+hist(dec_0_male$like)
+
+dec_1 = subset(Dtrain, Dtrain$dec ==1)
+hist(dec_1$like)
+dec_1_female = subset(dec_1, dec_1$gender ==0)
+hist(dec_1_female$like)
+dec_1_male = subset(dec_1, dec_1$gender ==1)
+hist(dec_1_male$like)
 
 
-
-
-#exphappy = 0.71  m10
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o + age*age_o + int_corr + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-summary(model)
-#your race 0.58
-#age 0.62, age_o 0.869,age*age_o = 0.628
-#int corr = 0.64   #getting rid of this    #m9
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o + age*age_o + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-summary(model)
-#get rid of age interactoin #m8
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o  + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-#get rid of your own age  #m7
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o + age*age_o + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-summary(model)
-
-#age = 0.61 # getting everything age #m6
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-summary(model)
-##nothing significant in race*otherrace   #m5
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) +  as.factor(same_race) + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-summary(model)
-
-## here come the good models: ##################
-## why isn't same race significant? fine i'll take it out  #m4
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(goal) + date + go_out ,family="binomial",data = logisticdata)
-summary(model)
-## ok date is decent, but i'll take it out just to have some models to compare     #m3
-model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(goal) + go_out,family="binomial",data = logisticdata)
-summary(model)
-
-
-
-#cross validation for model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(goal) + date + go_out,family="binomial",data = logisticdata)
-fpr <- NULL
-fnr <- NULL
-acc <- NULL
-train_waves = c(1,2,3,4,5,8,9,10,11,12,17,18,20,21)
-for (i in train_waves){
-  cv.index = which(logisticdata$wave == i)
-  test = logisticdata[cv.index,]
-  train = logisticdata[-cv.index,]
-  model = glm(as.factor(dec)~as.factor(gender)*as.factor(race_o) + as.factor(race_o)*as.factor(race) +  as.factor(same_race) + age + age_o + age*age_o + as.factor(goal) + date + go_out,family="binomial",data  = train)
-  results_prob <- predict(model,test,type='response')
-  results <- ifelse(results_prob > 0.5,1,0)
-  answers <- test$dec
-  misClasificError <- mean(answers != results)
-  acc = c(acc, 1-misClasificError)
-  cm <- confusionMatrix(data=results, reference=answers)
-  #fpr[i] <- cm$table[2]/(nrow(logisticdata)-smp_size)  #this code doesn't work for now
-  #fnr[i] <- cm$table[3]/(nrow(logisticdata)-smp_size)  #this code doesn't work for now
-}
-avgmisClasificError = mean(misClasificError)
-avgmisClasificError
-
-
-error_m3 = 0.487013
-error_m4 = 0.4891775
-error_m5 = 0.487013
-error_m6 = 0.474026
-error-m7 = 0.4891775
-
-
-#################making new predictors because these clearly aren't cutting it 
-
-#race: asian or not 
-#race: hispanic or not
-#race: white or not 
-#goal: if you're looking for long term or not 
 #feature engineering
-
-fullmodel = glm(as.factor(dec)~as.factor(goal),family="binomial",data = logisticdata)
-summary(fullmodel)
-
 logisticdata$asian_o = ifelse(logisticdata$race_o ==4, 1, 0)
 logisticdata$europeanlatino = ifelse(logisticdata$race ==2 |logisticdata$race ==3 , 1, 0)
 logisticdata$white = ifelse(logisticdata$race ==2 |logisticdata$race ==3 , 1, 0)
@@ -270,35 +215,20 @@ logisticdata_test$goal4 = ifelse(logisticdata_test$goal ==4, 1, 0)
 fullmodel = glm(as.factor(dec)~as.factor(gender)*as.factor(asian_o) + as.factor(asian_o)*as.factor(europeanlatino) +  as.factor(same_race) + age + age_o + age*age_o + int_corr + as.factor(goal4) + date + go_out + exphappy,family="binomial",data = logisticdata)
 summary(fullmodel)
 
-
-#backward selection
-model = glm(as.factor(dec)~as.factor(gender) + as.factor(asian_o) + date+ age_o  + int_corr + as.factor(goal4) + exphappy,  family="binomial",data = logisticdata)
-summary(model)
-
-
-#maybe add in age? AIC is starting to increase..
-#and date 
-
 #cross validation
-fpr <- NULL
-fnr <- NULL
 acc <- NULL
-
 
 train_waves = c(1,2,3,4,5,8,9,10,11,12,17,18,20,21)
 for (i in train_waves){
   cv.index = which(logisticdata$wave == i)
   test = logisticdata[cv.index,]
   train = logisticdata[-cv.index,]
-  model = glm(as.factor(dec)~as.factor(gender) + as.factor(asian_o)  + date+ age_o  + int_corr + as.factor(goal4) + exphappy,  family="binomial",data = train)
+  model = glm(as.factor(dec)~as.factor(goal4),  family="binomial",data = train)
   results_prob <- predict(model,test,type='response')
   results <- ifelse(results_prob > 0.5,1,0)
   answers <- test$dec
   misClasificError <- mean(answers != results)
   acc = c(acc, 1-misClasificError)
-  #cm <- confusionMatrix(data=results, reference=answers)
-  #fpr[i] <- cm$table[2]/(nrow(logisticdata)-smp_size)  #this code doesn't work for now
-  #fnr[i] <- cm$table[3]/(nrow(logisticdata)-smp_size)  #this code doesn't work for now
 }
 avgmisClasificError = mean(misClasificError)
 avgmisClasificError
@@ -314,10 +244,50 @@ avgmisClasificError
 
 
 #
-num_predic = c()
-CV_error = c(0.4621212,0.465368,0.4599567,0.4588745,0.461039,0.4599567,0.4588745,0.4556277)
-test_error = c(0.4374034,"missing",0.4470634,0.4509274,0.450541,0.450541,0.448609,0.4532457)
-AICs = c(7240.4,"missing",7281,7280,6030.4,6028.4,7269.5,)
+num_predic = c(14,13,12,11,10,9,8,7,6,5,4,3,2,1)
+CV_error = c(0.4621212,0.465368,0.4599567,0.4588745,0.461039,0.4599567,0.4588745,0.4556277,0.4632035,0.465368,0.4761905,0.461039,0.478355,0.5411255)
+
+plot(CV_error,type = "o",xlab = "Number of Predictors",main="CV Errors w/ Backwards Selection")
+
+
+###########################forward selection 
+
+library(leaps)
+regfit.full=regsubsets(as.factor(dec)~as.factor(gender)*as.factor(asian_o) + as.factor(asian_o)*as.factor(white) +  as.factor(same_race) + age + age_o + age*age_o + int_corr + as.factor(goal4) + date + go_out + exphappy,data = logisticdata) #all subset selection 
+summary(regfit.full)
+fullmodel = glm(as.factor(dec)~as.factor(gender)*as.factor(asian_o) + as.factor(asian_o)*as.factor(europeanlatino) +  as.factor(same_race) + age + age_o + age*age_o + int_corr + as.factor(goal4) + date + go_out + exphappy,family="binomial",data = logisticdata)
+summary(fullmodel)
+
+#cross validation, forward selection 
+acc <- NULL
+avgmisClasificError = NULL
+
+train_waves = c(1,2,3,4,5,8,9,10,11,12,17,18,20,21)
+for (i in train_waves){
+  cv.index = which(logisticdata$wave == i)
+  test = logisticdata[cv.index,]
+  train = logisticdata[-cv.index,]
+  model = glm(as.factor(dec)~as.factor(goal4),  family="binomial",data = train)
+  results_prob <- predict(model,test,type='response')
+  results <- ifelse(results_prob > 0.5,1,0)
+  print(results)
+  answers <- test$dec
+  misClasificError <- mean(answers != results)
+  acc = c(acc, 1-misClasificError)
+
+}
+acc
+mean(acc)
+
+
+#test classification error
+results_prob <- predict(model,logisticdata_test,type='response')
+results <- ifelse(results_prob > 0.5,1,0)
+answers <- logisticdata_test$dec
+misClasificError <- mean(answers != results)
+acc = c(acc, 1-misClasificError)
+avgmisClasificError = mean(misClasificError)
+avgmisClasificError
 
 
 
