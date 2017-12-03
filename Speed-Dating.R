@@ -1,5 +1,5 @@
 #####################################################################################
-## Linear Regression: Scored Attributes and Liking
+## Data Visualization
 #####################################################################################
 
 library(ggplot2)
@@ -9,18 +9,9 @@ data = Speed_Dating_Data
 age_diff = data$age - data$age_o
 data = data.frame(data, age_diff)
 Dtrain = data
-
-#Create test set: setting aside 7 waves for test set
-#set.seed(6)
-#test = sample(21,7)
-#Dtest = subset(data,wave %in% test)
-
-#Create training set: 14 waves in training set
-#Dtrain = subset(data, !(wave %in% test))
 Train = data.frame(Dtrain$iid, Dtrain$like,Dtrain$race, Dtrain$samerace,Dtrain$int_corr,Dtrain$attr,Dtrain$sinc,Dtrain$intel,Dtrain$fun,Dtrain$amb,Dtrain$shar,Dtrain$age_diff,Dtrain$like_o)
 Train = na.omit(Train)
 colnames(Train) = c("iid", "like","race", "samerace","int_corr","attr","sinc","intel","fun","amb","shar","age_diff", "like_o")
-
 
 #Visualizing distribution of liking people
 p <- ggplot(Train, aes(x=Train$like))
@@ -46,8 +37,6 @@ vioplot(Train.no.same.race$attr,Train.yes.same.race$attr,col="gray", names = c("
 title(main = "Attractive Score vs. Same Race", ylab = "Attractive Score")
 axis(side=1,at=1:2,labels=c("Different Race","Same Race"))
 
-
-
 #boxplots by race
 #boxplot(Train$like~Train$samerace, xlab = "Same race, no on left")
 #Black=subset(Train,Train$race==1)
@@ -56,8 +45,6 @@ axis(side=1,at=1:2,labels=c("Different Race","Same Race"))
 #Asian=subset(Train,Train$race==4)
 #Native=subset(Train,Train$race==5)
 #boxplot(Latino$like~Latino$samerace, xlab = "Same race, no on left")
-
-
 
 #Creating violin plots
 library(vioplot)
@@ -104,24 +91,86 @@ par(mfrow=c(1,1))
 corrplot(cor(Train[-1]), tl.col = "black",method="number",main = "Correlation Plot")
 corrplot(cor(Train[-1]), tl.col = "black",method="square",main = "Correlation Plot")
 
+####################################################################################
+##Linear Model on how much you like someone
+####################################################################################
+
 #Fitting a Model
 library(MuMIn)
 model = lm(Train$like~Train$age_diff+Train$samerace+Train$int_corr+Train$attr+Train$sinc+Train$intel+Train$fun+Train$amb, Train$shar,data=Train)
 options(na.action = "na.fail")
 dredge(model)[1]
-model = lm(Train$like~Train$age_diff + Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
-summary(model)
-
-model = lm(Train$like~Train$samerace)
-summary(model)
-
+#it looks like age_diff is the only predictor that isn't significant
 model = lm(Train$like~ Train$amb + Train$attr + Train$fun + Train$int_corr + Train$intel + Train$samerace + Train$sinc)
 summary(model)
-model = lm(Train$like~Train$samerace)
-summary(model)
+
+####################################################################################
+##Linear Model on how much you like someone using non-obvious predictors
+####################################################################################
+
+#Getting more variables 
+AllData = data.frame(Dtrain$iid, Dtrain$like,Dtrain$age_o, Dtrain$age_diff,Dtrain$race_o, Dtrain$samerace,Dtrain$int_corr,Dtrain$like_o)
+AllData = na.omit(AllData)
+colnames(AllData) = c("iid","like","age_o","age_diff","race_o","samerace","int_corr","like_o")
+
+#dredged model
+global.model = lm(AllData$like~AllData$age_o+AllData$age_diff+AllData$race_o+AllData$samerace+AllData$int_corr)
+dredge(global.model)[1]
+summary(lm(AllData$like~AllData$age_diff+AllData$race_o+AllData$samerace+AllData$int_corr))
+
+####################################################################################
+##Linear Model on how much you like someone using non-obvious predictors, split data
+####################################################################################
+
+#Create test set: setting aside 7 waves for test set
+set.seed(6)
+set_aside = sample(21,7)
+Test_Data = subset(data, wave %in% test)
+#Create training set: 14 waves in training set
+Training_Data = subset(data, !(wave %in% test))
+
+#Limiting to the variables we need
+Training_Data = data.frame(Training_Data$like,Training_Data$age_o, Training_Data$age_diff,Training_Data$race_o, Training_Data$samerace,Training_Data$int_corr)
+Training_Data = na.omit(Training_Data)
+colnames(Training_Data) = c("like","age_o","age_diff","race_o","samerace","int_corr")
+Test_Data = data.frame( Test_Data$like,Test_Data$age_o, Test_Data$age_diff,Test_Data$race_o, Test_Data$samerace,Test_Data$int_corr)
+Test_Data = na.omit(Test_Data)
+colnames(Test_Data) = c("like","age_o","age_diff","race_o","samerace","int_corr")
+
+library(leaps)
+regfit.full=regsubsets(Training_Data$like~.,Training_Data)
+summary(regfit.full)
+reg.summary=summary(regfit.full)
+reg.summary$rsq
+
+#some plots about subsets
+par(mfrow=c(2,2))
+plot(reg.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+plot(reg.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+points(which.max(reg.summary$adjr2),reg.summary$adjr2[which.max(reg.summary$adjr2)], col="red",cex=2,pch=20)
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+points(which.min(reg.summary$cp),reg.summary$cp[which.min(reg.summary$cp)],col="red",cex=2,pch=20)
+plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+points(which.min(reg.summary$bic),reg.summary$bic[which.min(reg.summary$bic)],col="red",cex=2,pch=20)
+
+#cross validation to pick the best number of predictors
+regfit.best=regsubsets(Training_Data$like~.,data=Training_Data,nvmax=5)
+test.mat=model.matrix(Test_Data$like~.,data=Test_Data) # create an X matrix of test data
+val.errors=rep(NA,5)
+for(i in 1:5){
+  coefi=coef(regfit.best,id=i)
+  print(coefi)
+  pred=test.mat[,names(coefi)]%*%coefi
+  val.errors[i]=mean((Test_Data$like-pred)^2)
+}
+val.errors
+which.min(val.errors)
+coef(regfit.best,1)
+regfit.best=regsubsets(Salary~.,data=Hitters[train,],nvmax=19)
+model = regsubsets(Training_Data$like~.,data=Training_Data,nvmax=5)
 
 #####################################################################################
-## Linear Regression: Demographic Information and Self-Perception
+## Linear Regression: Demographic Information and Self-Perception and visualizations
 #####################################################################################
 Train2 = data.frame(Dtrain$iid, Dtrain$gender, Dtrain$age, Dtrain$race, Dtrain$field_cd, Dtrain$attr_o,Dtrain$sinc_o,Dtrain$intel_o,Dtrain$fun_o,Dtrain$amb_o, Dtrain$attr3_1, Dtrain$sinc3_1, Dtrain$intel3_1, Dtrain$fun3_1, Dtrain$amb3_1, Dtrain$like_o)
 Train2 = na.omit(Train2)
@@ -142,7 +191,6 @@ for (i in 1:nrow(Train2)){
 Popular = subset(Train2,Train2$like_o>7.65)
 #who gets an average of 2.5
 Unpopular = subset(Train2,Train2$like_o<4.57)
-
 table(Popular$race, Popular$gender)
 table(Unpopular$race, Unpopular$gender)
 
@@ -167,13 +215,8 @@ p2 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Race", title =  "Sel
 p3 <- ggplot(Train2, aes(as.factor(Train2$field),Train2$self_awar_score))
 p3 + geom_boxplot() + labs(y = "Self Awareness Score", x = "Field", title =  "Self Awareness Score by Field") + scale_x_discrete(labels=c("Law", "Math", "Social Science", "Medical Science", "Engineering","English","History","Business","Education","Biological Sciences","Social Work","Undergrad","Political Science","Film","Fine Arts","Languages","Architecture","Other"))  + theme(axis.text.x = element_text(angle=30))
 
-
-
-
 p4 <- ggplot(Train2, aes(as.factor(Train2$age),Train2$self_awar_score))
 p4 + geom_point() + labs(y = "Self Awareness Score", x = "Age", title =  "Self Awareness Score by Age")  
-
-
 
 #fit linear model
 model = lm(Train2$self_awar_score~as.factor(Train2$gender) + Train2$age + as.factor(Train2$race) + as.factor(Train2$field))
@@ -184,7 +227,6 @@ model = lm(Train2$self_awar_score~ as.factor(Train2$race))
 model = lm(Train2$self_awar_score~ as.factor(Train2$gender))
 model = lm(Train2$self_awar_score~ as.factor(Train2$race))
 summary(model)
-
 
 #does one's self-awarness predict how much other people like you?
 par(mfrow=c(1,1))
